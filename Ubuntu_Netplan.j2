@@ -1,0 +1,12 @@
+network:
+  ethernets:
+    ens192:
+      addresses:
+      - {{ vm.hardware.network.ipv4_address_base + (60|int + idx|int)|string }}/24
+      gateway4: {{ vm.hardware.network.gateway }}
+      nameservers:
+        addresses:
+        - {{ vm.hardware.network.dns }}
+        search:
+        - {{ vm.hardware.network.search_domain }}
+  version: 2

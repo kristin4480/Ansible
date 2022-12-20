@@ -1,0 +1,2 @@
+ANSIBLE_NOCOWS=1 ansible-playbook --become -e 'ansible_sudo_pass=Lucario44!' main.yaml -v
+

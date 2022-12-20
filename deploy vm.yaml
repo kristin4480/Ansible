@@ -1,0 +1,211 @@
+    - name: "{{vm.name + idx}}: Check if we have Ubuntu autoinstaller ISO in ESXI datastore"
+      community.vmware.vsphere_file:
+        datacenter: "{{esxi_host.datacenter}}"
+        datastore:  "{{ vm.iso_location.datastore_name }}"
+        host: "{{esxi_host.server}}"
+        password: "{{esxi_host.password}}"
+        path: "{{ vm.iso_location.datastore_path+'/'+vm.iso_name }}" #calling a variable
+        state: file
+        username: "{{esxi_host.username}}"
+        validate_certs: false
+      register: ESXI_ISO_check
+      ignore_errors: true
+
+    
+    - name: "{{instance.name}}: Check if iso file exists in the Ansible controller and get info"
+      ansible.builtin.stat:
+        path: "/tmp/ubuntu2004.iso"
+      register: iso_on_local_fs
+
+    - name: "{{instance.name}}: Check if iso file exists in the datastore and return checksum"
+      ansible.builtin.debug:
+        msg: Rmote file size {{ ESXI_ISO_check.size }} / Local file size {{ iso_on_local_fs.stat.size }}
+
+
+#not a playbook
+    #passed
+    - name: "{{vm.name + idx}}: Upload the custom Ubuntu ISO to the vSphere datastore"
+      community.vmware.vsphere_copy: 
+        hostname: "{{esxi_host.server}}"
+        username: "{{esxi_host.username}}"
+        password: "{{esxi_host.password}}"
+        validate_certs: no
+        datacenter: "{{esxi_host.datacenter}}"
+        src: "/tmp/ubuntu2004.iso" 
+        datastore: "{{ vm.iso_location.datastore_name }}"
+        path: "{{ vm.iso_location.datastore_path+'/'+'ubuntu2004.iso' }}"
+      when: 
+        - ESXI_ISO_check.size != iso_on_local_fs.stat.size
+ 
+ 
+    - name: "{{vm.name + idx}}: Check if we have existing VM name"
+      community.vmware.vmware_guest_info:
+        hostname: "{{esxi_host.server}}"
+        username: "{{esxi_host.username}}"
+        password: "{{esxi_host.password}}"  
+        datacenter: "{{esxi_host.datacenter}}"
+        validate_certs: no
+        name: "{{ vm.name + idx}}"
+        schema: vsphere
+      register: VMInfo
+      ignore_errors: true
+
+
+
+    - name: "{{vm.name + idx}}: Deploy Ubuntu VM"
+      community.vmware.vmware_guest:
+        hostname: "{{esxi_host.server}}"
+        username: "{{esxi_host.username}}"
+        password: "{{esxi_host.password}}"
+        validate_certs: no
+        name: "{{ vm.name + idx}}"
+        state: poweredon #final result after task execution =  running vm
+        guest_id: ubuntu64Guest #what OS will be installed
+        cluster: ""
+        datacenter: "{{esxi_host.datacenter}}"
+        folder: '/'
+        disk:
+        - size_gb: "{{ vm.hardware.disk.size }}"
+          type: thin #dynamic disk usage, grab the size we need for the moment
+          datastore: "{{ vm.iso_location.datastore_name }}"
+        hardware:
+          memory_mb: "{{ vm.hardware.memory }}"
+          num_cpus: "{{ vm.hardware.cpu }}"
+          num_cpu_cores_per_socket: "{{ vm.hardware.cpu_cores }}"
+          scsi: paravirtual 
+        networks:
+          - name: "VM Network"
+            device_type: vmxnet3
+        cdrom:
+          - controller_number: 0
+            unit_number: 0
+            type: iso
+            iso_path: "{{'[' + vm.iso_location.datastore_name + '] ' + vm.iso_location.datastore_path + '/ubuntu2004.iso'}}"
+            state: present
+        annotation: | 
+                    *** Auto-Deployed by Ansible ***
+                    Username: "{{ vm.username }}"
+                    Password: "{{ vm.password }}"
+      when: VMInfo.failed == true 
+
+    - name: "{{vm.name + idx}}: Start checking if the Ubuntu VM is ready" # if vm can execute linux command means it is up and running
+      community.vmware.vmware_vm_shell:
+        hostname: "{{esxi_host.server}}"
+        username: "{{esxi_host.username}}"
+        password: "{{esxi_host.password}}"
+        validate_certs: false
+        vm_id: "{{vm.name + idx}}"
+        vm_username: "{{vm.username}}"
+        vm_password: "{{vm.password}}"
+        wait_for_process: true
+        timeout: 2000
+        vm_shell: /usr/bin/ls
+      register: result
+    #  when: deployed_vm.failed is defined and deployed_vm.failed == false
+      until: result is not failed
+      retries: 60
+      delay: 40
+ 
+    # - name: Start checking if the Ubuntu VM is ready
+    #   community.vmware.vmware_guest_info:
+    #     hostname: "{{esxi_host.server}}"
+    #     username: "{{esxi_host.username}}"
+    #     password: "{{esxi_host.password}}"
+    #     datacenter: "{{esxi_host.datacenter}}"
+    #     validate_certs: no
+    #     name: "{{vm.name}}"
+    #     schema: vsphere
+    #   register: vm_facts
+    #   until: vm_facts.instance.guest.hostName is search(vm.hostname) #this is currently not working, as ansible is getting confused, which hostname it should compare it to
+    #   retries: 100
+    #   delay: 100
+    #- debug:
+    #    msg: "{{vm_facts}}"
+ 
+ 
+    # - name: Set password for the Ubuntu user
+    #   community.vmware.vmware_vm_shell:
+    #     hostname: "{{esxi_host.server}}"
+    #     username: "{{esxi_host.username}}"
+    #     password: "{{esxi_host.password}}"
+    #     validate_certs: no
+    #     vm_id: "{{vm.name}}"
+    #     vm_username: "{{vm.username}}"
+    #     vm_password: "{{iso_config.password}}" #VMware1!
+    #     vm_shell: /usr/bin/echo
+    #     vm_shell_args: "'{{ vm.username }}:{{ vm.password }}' | sudo chpasswd"
+    #   when: VMInfo.failed == true #needs further checking
+ 
+ 
+    - name: "{{vm.name + idx}}: Set hostname for the Ubuntu VM"
+      community.vmware.vmware_vm_shell:
+        hostname: "{{esxi_host.server}}"
+        username: "{{esxi_host.username}}"
+        password: "{{esxi_host.password}}"
+        validate_certs: no
+        vm_id: "{{vm.name + idx}}"
+        vm_username: "{{vm.username}}"
+        vm_password: "{{vm.password}}" #VMware1!
+        vm_shell: "/usr/bin/sudo"
+        vm_shell_args: "hostnamectl set-hostname {{vm.hostname + idx}} > /tmp/$$.txt 2>&1"
+      # when: VMInfo.failed == true #needs further checking
+ 
+ 
+    - name: "{{vm.name + idx}}: Update hostname in hosts file for the Ubuntu VM"
+      community.vmware.vmware_vm_shell:
+        hostname: "{{esxi_host.server}}"
+        username: "{{esxi_host.username}}"
+        password: "{{esxi_host.password}}"
+        validate_certs: no
+        vm_id: "{{vm.name + idx}}"
+        vm_username: "{{vm.username}}"
+        vm_password: "{{vm.password}}" #VMware1!
+        vm_shell: "/usr/bin/sudo"
+        vm_shell_args: "sed -i 's|{{iso_config.hostname}}|{{vm.hostname + idx}}|' /etc/hosts"
+      # when: VMInfo.failed == true #needs further checking
+ 
+    - name: "{{vm.name + idx}}: Copy network configuration file to working directory"
+      ansible.builtin.template: 
+        src: ./Ubuntu_Netplan.j2
+        dest: "/tmp/00-installer-config.yaml"
+        mode: "666"
+ 
+ 
+    - name: "{{vm.name + idx}}: Copy network configuration file to Ubuntu VM"
+      community.vmware.vmware_guest_file_operation:
+        hostname: "{{esxi_host.server}}"
+        username: "{{esxi_host.username}}"
+        password: "{{esxi_host.password}}"
+        validate_certs: no
+        vm_id: "{{vm.name + idx}}"
+        vm_username: "{{vm.username}}"
+        vm_password: "{{vm.password}}"
+        copy:
+            src: "/tmp/00-installer-config.yaml"
+            dest: "/home/{{ vm.username }}/00-installer-config.yaml"
+ 
+ 
+    - name: "{{vm.name + idx}}: Move network configuration file to right location on Ubuntu VM"
+      community.vmware.vmware_vm_shell:
+        hostname: "{{esxi_host.server}}"
+        username: "{{esxi_host.username}}"
+        password: "{{esxi_host.password}}"
+        validate_certs: no
+        vm_id: "{{vm.name + idx}}"
+        vm_username: "{{vm.username}}"
+        vm_password: "{{vm.password}}"
+        vm_shell: /usr/bin/sudo
+        vm_shell_args: "mv /home/{{ vm.username }}/00-installer-config.yaml /etc/netplan/00-installer-config.yaml"
+ 
+ 
+    - name: "{{vm.name + idx}}: Appply the network configuration on Ubuntu VM"
+      community.vmware.vmware_vm_shell:
+        hostname: "{{esxi_host.server}}"
+        username: "{{esxi_host.username}}"
+        password: "{{esxi_host.password}}"
+        validate_certs: no
+        vm_id: "{{vm.name + idx}}"
+        vm_username: "{{vm.username}}"
+        vm_password: "{{vm.password}}"
+        vm_shell: /usr/bin/sudo
+        vm_shell_args: netplan apply

@@ -1,0 +1,6 @@
+---
+- import_playbook: "generate-ssh-keys.yaml"
+- import_playbook: "generate-iso.yaml"
+- import_playbook: "loop-vms.yaml"
+- import_playbook: "dinamically_populate_hosts.yaml"
+- import_playbook: "install-lamp.yaml"

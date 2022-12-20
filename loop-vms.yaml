@@ -1,0 +1,20 @@
+---
+- hosts: localhost
+  name: loop
+  gather_facts: false
+  become: false
+  tasks:
+    - name: iterate vms
+      include_tasks: './deploy vm.yaml'
+      with_sequence: 0-1
+      vars:
+        vm: "{{default_vm_config}}"
+      loop_control: 
+        loop_var: idx
+      # with_items: "{{ instances }}"
+      # loop_control: 
+      #   loop_var: vm
+
+
+
+

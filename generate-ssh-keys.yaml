@@ -1,0 +1,15 @@
+---
+- name: Generate SSH key
+  hosts: localhost
+  connection: local
+  become: false
+  vars:
+    ssh_key_filename: id_rsa_kris
+  tasks:
+    - name: Generate SSH key "{{ssh_key_filename}}"
+      openssh_keypair:
+        path: "~/.ssh/{{ssh_key_filename}}"
+        type: rsa
+        size: 4096
+        state: present
+        force: no
