@@ -5,6 +5,7 @@ ansible_ssh_pass:
 ansible_ssh_private_key_file: # Path to the ssh private keys
 ssh_key_filename: # name of your private key
 public_ssh_key_filename: #name of your public key
+snapshot_name: 
 
 esxi_host:
   hostname: localhost.localdomain
