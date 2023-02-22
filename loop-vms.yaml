@@ -11,9 +11,6 @@
         vm: "{{default_vm_config}}"
       loop_control: 
         loop_var: idx
-      # with_items: "{{ instances }}"
-      # loop_control: 
-      #   loop_var: vm
 
 
 

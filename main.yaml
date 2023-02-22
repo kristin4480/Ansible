@@ -1,6 +1,10 @@
 ---
+# - import_playbook: "upload-and-execute-netplan-for-each-machine.yaml" # Optional task
 - import_playbook: "generate-ssh-keys.yaml"
 - import_playbook: "generate-iso.yaml"
 - import_playbook: "loop-vms.yaml"
 - import_playbook: "dinamically_populate_hosts.yaml"
+- import_playbook: "install-docker.yaml"
 - import_playbook: "install-lamp.yaml"
+- import_playbook: "install-docker-repository.yaml"
+# - import_playbook: "restore-vms-from-snapshots.yaml" - Optional task

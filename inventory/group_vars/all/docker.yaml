@@ -1,0 +1,7 @@
+---
+docker:
+  repository:
+    port: 5000
+    storage_var_path: /home/???/data
+    name: registry
+    image_name: registry:2

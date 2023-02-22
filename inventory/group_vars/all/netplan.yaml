@@ -1,0 +1,9 @@
+---
+netplan:
+  source_path: /home/???/???/update-netplan.sh
+  destination_path: /home/???/update-netplan.sh
+  shell: /usr/bin/sudo
+  shell_args: chmod +x update-netplan.sh
+  shell_execute_script: ./update-netplan.sh # this may vary on what your cwd is
+  shell_cwd: /home/???
+  ip: 192.168.71.   # please add only till the 3rd octet

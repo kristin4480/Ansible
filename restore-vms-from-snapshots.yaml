@@ -1,0 +1,51 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: Power off vms
+      community.vmware.vmware_guest:
+        hostname: "{{ esxi_host.server }}"
+        username: "{{ esxi_host.username }}"
+        password: "{{ esxi_host.password }}"
+        datacenter: "{{ esxi_host.datacenter }}"
+        validate_certs: no
+        name: "{{ default_vm_config.name + idx }}"
+        state: poweredoff
+        folder: "{{ esxi_host.folder }}"
+      delegate_to: localhost
+      with_sequence: 0-1
+      loop_control:
+        loop_var: idx
+
+    - name: Revert to a snapshot
+      community.vmware.vmware_guest_snapshot:
+        hostname: "{{ esxi_host.server }}"
+        username: "{{ esxi_host.username }}"
+        password: "{{ esxi_host.password }}"
+        validate_certs: no
+        datacenter: "{{ esxi_host.datacenter }}"
+        folder: "{{ esxi_host.folder }}"
+        name: "{{ default_vm_config.name + idx }}"
+        state: revert
+        snapshot_name: "Initial Install"
+      delegate_to: localhost
+      with_sequence: 0-1
+      loop_control: 
+        loop_var: idx
+
+    - name: Power on vms
+      community.vmware.vmware_guest:
+        hostname: "{{ esxi_host.server }}"
+        username: "{{ esxi_host.username }}"
+        password: "{{ esxi_host.password }}"
+        datacenter: "{{ esxi_host.datacenter }}"
+        validate_certs: no
+        name: "{{ default_vm_config.name + idx }}"
+        state: poweredon
+        folder: "{{ esxi_host.folder }}"
+      delegate_to: localhost
+      with_sequence: 0-1
+      loop_control:
+        loop_var: idx

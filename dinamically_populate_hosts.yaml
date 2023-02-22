@@ -4,13 +4,14 @@
   gather_facts: false
   become: false
   tasks:
+  
     - name: returning vm list on a folder
       vmware_vm_info:
         validate_certs: no
         hostname: "{{esxi_host.server}}"
-        password: Lucario44!
-        username: root
-        folder: "ha-datacenter/"
+        username: "{{ esxi_host.username }}"
+        password: "{{ esxi_host.password }}"
+        folder: "{{ esxi_host.folder }}"
       register: vms
 
     - name: Dinamically add VM to hosts file
@@ -20,9 +21,9 @@
           - web-servers
         hostname: "{{item.guest_name}}"
         ansible_host: "{{item.ip_address}}"
-        ansible_user: "kris"
-        ansible_ssh_private_key_file: "~/.ssh/id_rsa_kris"
-        ansible_ssh_pass: VMware1!
+        ansible_user: "{{ ansible_ssh_user }}"
+        ansible_ssh_private_key_file: "{{ ansible_ssh_private_key_file }}"
+        ansible_ssh_pass: "{{ ansible_ssh_pass }}"
       with_items: "{{vms.virtual_machines}}"
 
     - name: accept new ssh fingerprints

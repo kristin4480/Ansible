@@ -2,11 +2,10 @@
 - hosts: web-servers
   become: true
   vars:
-    mysql_root_password: "mysql_root_password"
-    app_user: "kris"
-    http_host: "kris.com"
-    http_conf: "kris.com.conf"
-    http_port: "80"
+    mysql_root_password: "{{ mysql.password }}"
+    http_host: "{{ apache.host }}"
+    http_conf: "{{ apache.conf }}"
+    http_port: "{{ apache.port }}"
     disable_default: true
   tasks:
     - name: Apt update
@@ -41,9 +40,6 @@
         login_unix_socket: /var/run/mysqld/mysqld.sock
       register: mysql_password 
       ignore_errors: true
-
-    - debug: 
-        msg: "{{mysql_password}}"
 
     - name: Removes all anonymous user accounts
       mysql_user:

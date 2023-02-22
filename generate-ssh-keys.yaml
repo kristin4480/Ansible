@@ -4,7 +4,7 @@
   connection: local
   become: false
   vars:
-    ssh_key_filename: id_rsa_kris
+    ssh_key_filename: "{{ ssh_key_filename }}"
   tasks:
     - name: Generate SSH key "{{ssh_key_filename}}"
       openssh_keypair:

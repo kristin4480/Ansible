@@ -1,24 +1,31 @@
 ---
+ansible_connection: ssh 
+ansible_ssh_user:
+ansible_ssh_pass:
+ansible_ssh_private_key_file: # Path to the ssh private keys
+ssh_key_filename: # name of your private key
+public_ssh_key_filename: #name of your public key
+
 esxi_host:
   hostname: localhost.localdomain
   username: root
-  password: Lucario44!
+  password: 
   datacenter: ha-datacenter
-  server: 192.168.1.103
+  server: 
   port: 443
   folder: '/'
 
 iso_config:
   hostname: demo-server
-  username: kris
-  password: VMware1!
+  username: 
+  password:
 
 default_vm_config:
-  name: kris
+  name:
   hostname: demoserver
   esxi_host: localhost.localdomain
-  username: kris
-  password: VMware1!
+  username:
+  password:
   iso_name: ubuntu2004.iso 
   iso_location:
     datastore_name: datastore1
@@ -33,56 +40,7 @@ default_vm_config:
       provision_type: thin
     network:
       port_group: 'VM Network'
-      ipv4_address_base: 192.168.1.
+      ipv4_address_base: # Please add until the 3rd octet
       dns: 8.8.8.8
-      gateway: 192.168.1.1
+      gateway: # Enter the full gateway address
       search_domain: ''
-
-
-instances:
-  - name: kris
-    hostname: demo_server
-    esxi_host: localhost.localdomain
-    username: kris
-    password: root
-    iso_name: ubuntu2004.iso 
-    iso_location:
-      datastore_name: datastore1
-      datastore_path: images
-    hardware:
-      cpu: 4
-      cpu_cores: 4
-      memory: 4096
-      disk: 
-        datastore_name: datastore1
-        size: 50
-        provision_type: thin
-      network:
-        port_group: 'VM Network'
-        ipv4_address: 192.168.1.69/24
-        dns: 8.8.8.8
-        gateway: 192.168.1.1
-        search_domain: ''
-  - name: kris1
-    hostname: demo_server1
-    esxi_host: localhost.localdomain
-    username: kris
-    password: root
-    iso_name: ubuntu2004.iso 
-    iso_location:
-      datastore_name: datastore1
-      datastore_path: images
-    hardware:
-      cpu: 4
-      cpu_cores: 4
-      memory: 4096
-      disk:
-        datastore_name: datastore1
-        size: 50
-        provision_type: thin
-      network:
-        port_group: 'VM Network'
-        ipv4_address: 192.168.1.69/24
-        dns: 8.8.8.8
-        gateway: 192.168.1.1
-        search_domain: ''

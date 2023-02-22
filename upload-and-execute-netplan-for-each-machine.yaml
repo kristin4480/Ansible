@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Upload shell script to vms
+      include_tasks: upload-and-execute-netplan.yaml
+      with_sequence: 0-1
+      loop_control:
+        loop_var: idx

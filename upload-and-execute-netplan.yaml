@@ -1,0 +1,49 @@
+- name: "Upload shell script to vm {{ default_vm_config.name + idx | string }}"
+  community.vmware.vmware_guest_file_operation:
+    hostname: "{{ esxi_host.server }}"
+    username: "{{ esxi_host.username }}"
+    password: "{{ esxi_host.password }}"
+    datacenter: "{{ esxi_host.datacenter }}"
+    validate_certs: no
+    vm_id: "{{ default_vm_config.name + idx | string }}"
+    vm_username: "{{ default_vm_config.username }}"
+    vm_password: "{{ default_vm_config.password }}"
+    copy:
+      src: "{{ netplan.source_path }}"
+      dest: "{{ netplan.destination_path }}"
+      overwrite: true
+  delegate_to: localhost
+
+- name: Run command inside a virtual machine
+  community.vmware.vmware_vm_shell:
+    hostname: "{{ esxi_host.server }}"
+    username: "{{ esxi_host.username }}"
+    password: "{{ esxi_host.password }}"
+    datacenter: "{{ esxi_host.datacenter }}"
+    folder: "{{ esxi_host.folder }}"
+    vm_id: "{{ default_vm_config.name + idx | string }}"
+    vm_username: "{{ default_vm_config.username }}"
+    vm_password: "{{ default_vm_config.password }}"
+    vm_shell: "{{ netplan.shell }}"
+    vm_shell_args: "{{ netplan.shell_args }}"
+    vm_shell_cwd: "{{ netplan.shell_cwd }}"
+    wait_for_process: True
+    validate_certs: no
+  delegate_to: localhost
+
+- name: Execute shell script on virtual machine
+  community.vmware.vmware_vm_shell:
+    hostname: "{{ esxi_host.server }}"
+    username: "{{ esxi_host.username }}"
+    password: "{{ esxi_host.password }}"
+    datacenter: "{{ esxi_host.datacenter }}"
+    folder: "{{ esxi_host.folder }}"
+    vm_id: "{{ default_vm_config.name + idx | string }}"
+    vm_username: "{{ default_vm_config.username }}"
+    vm_password: "{{ default_vm_config.password }}"
+    vm_shell: "{{ netplan.shell }}"
+    vm_shell_args: "{{ netplan.shell_execute_script }} {{ netplan.ip + (60 + idx | int ) | string }} {{ netplan.ip + 1 | string }}"
+    vm_shell_cwd: "{{ netplan.shell_cwd }}"
+    wait_for_process: True
+    validate_certs: no
+  delegate_to: localhost
